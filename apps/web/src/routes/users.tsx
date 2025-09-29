@@ -26,11 +26,14 @@ function UsersPage() {
   }));
 
   const navigate = useNavigate({
-		from: "/",
-	});
+    from: "/",
+  });
   return (
     <div className="mx-auto max-w-md w-full px-3 py-4 border border-white">
-      <h1 className="mb-4 text-lg font-semibold">User List</h1>
+      <div className="flex flex-row w-full justify-between mb-4">
+        <h1 className="mb-4 text-lg font-semibold">User List</h1>
+        <button onClick={() => navigate({ to: "/pdfdesigner" })} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Tambah Template</button>
+      </div>
 
       {usersQuery.isLoading && (
         <p className="text-sm text-muted-foreground">Loading users...</p>
@@ -46,13 +49,13 @@ function UsersPage() {
         <div className="divide-y divide-border rounded-lg border">
           {(usersQuery.data as any).map((user: any) => (
             <div
-            onClick={() =>
-              navigate({
-                to: "/pdfdesigner/$id",
-                params: { id: String(user.id) },
-              })
-            }
-            key={user.id} className="p-3 text-sm flex flex-row justify-between items-center">
+              onClick={() =>
+                navigate({
+                  to: "/pdfdesigner/$id",
+                  params: { id: String(user.id) },
+                })
+              }
+              key={user.id} className="p-3 text-sm flex flex-row justify-between items-center">
               <div className="flex flex-col">
                 <p className="font-medium">{user.name || "No Name"}</p>
                 <p className="text-muted-foreground">{user.email}</p>

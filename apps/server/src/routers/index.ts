@@ -27,33 +27,39 @@ export const appRouter = router({
     const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.name, input.tamplate)));
     if (!resultTemplate) {
       throw new TRPCError({
-        code: "BAD_REQUEST",
+        code: "NOT_FOUND",
         message: "Template not found",
       })
     }
+
     const template = resultTemplate[0];
     if (!template) {
       throw new TRPCError({
-        code: "BAD_REQUEST",
+        code: "NOT_FOUND",
         message: "Template not found",
       })
     }
 
     // Get required field tempalte
     const requiredTemplateResult = (await ctx.db.select().from(templateRequiredField).where(eq(templateRequiredField.templateId, template.id)));
-   
+    if (!requiredTemplateResult) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Template not found",
+      })
+    }
 
     let response: UserIjazah[] = [];
     const result = await ctx.db.select().from(user);
 
     for (const user of result) {
-      const dataPayload:Payload = {
+      const dataPayload: Payload = {
         templateId: template.id,
-        name : requiredTemplateResult.map((item) => item.name),
-        value : requiredTemplateResult.map((item) => (user.id)),
+        name: requiredTemplateResult.map((item) => item.name),
+        value: requiredTemplateResult.map((item) => (user.id)),
         exp: 0,
       }
-      
+
       const token = encryptToken(dataPayload);
 
       const urlIjazah = `${process.env.FE_URL}/viewer/${token}`;
@@ -81,6 +87,7 @@ export const appRouter = router({
   saveTemplate: protectedProcedure
     .input(z.object({
       name: z.string(),
+      requiredFields: z.array(z.string()),
       template: z.any(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -102,21 +109,39 @@ export const appRouter = router({
               updatedAt: new Date(),
             },
           });
+        if (result[0].affectedRows == 2) {
+          const resultTemplate = (await tx.select().from(templates).where(eq(templates.name, input.name)));
+          if (!resultTemplate) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Template not found",
+            })
+          }
 
-        if (result[0].affectedRows != 2) {
+          const template = resultTemplate[0];
+          if (!template) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Template not found",
+            })
+          }
+          // Delete required field
+          await tx.delete(templateRequiredField).where(eq(templateRequiredField.templateId,template.id));
+        }
+
+        for (const requiredField of input.requiredFields) {
+          const idReqField = crypto.randomUUID();
           await tx
             .insert(templateRequiredField)
             .values({
-              id,
+              id: idReqField,
               templateId: id,
-              name: "name",
+              name: requiredField,
               createdAt: new Date(),
               updatedAt: new Date(),
             })
-            .onDuplicateKeyUpdate({
-              set: { id: sql`id` },
-            });
         }
+
       });
 
       return { success: true };
