@@ -11,11 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as PdfdesignerRouteImport } from './routes/pdfdesigner'
+import { Route as PdfdesginerRouteImport } from './routes/pdfdesginer'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ViewerKeyRouteImport } from './routes/viewer/$key'
 import { Route as PdfdesignerIdRouteImport } from './routes/pdfdesigner/$id'
+import { Route as PdfIdRouteImport } from './routes/pdf/$id'
 
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
@@ -25,6 +27,11 @@ const UsersRoute = UsersRouteImport.update({
 const PdfdesignerRoute = PdfdesignerRouteImport.update({
   id: '/pdfdesigner',
   path: '/pdfdesigner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfdesginerRoute = PdfdesginerRouteImport.update({
+  id: '/pdfdesginer',
+  path: '/pdfdesginer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -52,13 +59,20 @@ const PdfdesignerIdRoute = PdfdesignerIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => PdfdesignerRoute,
 } as any)
+const PdfIdRoute = PdfIdRouteImport.update({
+  id: '/pdf/$id',
+  path: '/pdf/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/pdfdesginer': typeof PdfdesginerRoute
   '/pdfdesigner': typeof PdfdesignerRouteWithChildren
   '/users': typeof UsersRoute
+  '/pdf/$id': typeof PdfIdRoute
   '/pdfdesigner/$id': typeof PdfdesignerIdRoute
   '/viewer/$key': typeof ViewerKeyRoute
 }
@@ -66,8 +80,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/pdfdesginer': typeof PdfdesginerRoute
   '/pdfdesigner': typeof PdfdesignerRouteWithChildren
   '/users': typeof UsersRoute
+  '/pdf/$id': typeof PdfIdRoute
   '/pdfdesigner/$id': typeof PdfdesignerIdRoute
   '/viewer/$key': typeof ViewerKeyRoute
 }
@@ -76,8 +92,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/pdfdesginer': typeof PdfdesginerRoute
   '/pdfdesigner': typeof PdfdesignerRouteWithChildren
   '/users': typeof UsersRoute
+  '/pdf/$id': typeof PdfIdRoute
   '/pdfdesigner/$id': typeof PdfdesignerIdRoute
   '/viewer/$key': typeof ViewerKeyRoute
 }
@@ -87,8 +105,10 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/pdfdesginer'
     | '/pdfdesigner'
     | '/users'
+    | '/pdf/$id'
     | '/pdfdesigner/$id'
     | '/viewer/$key'
   fileRoutesByTo: FileRoutesByTo
@@ -96,8 +116,10 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/pdfdesginer'
     | '/pdfdesigner'
     | '/users'
+    | '/pdf/$id'
     | '/pdfdesigner/$id'
     | '/viewer/$key'
   id:
@@ -105,8 +127,10 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/pdfdesginer'
     | '/pdfdesigner'
     | '/users'
+    | '/pdf/$id'
     | '/pdfdesigner/$id'
     | '/viewer/$key'
   fileRoutesById: FileRoutesById
@@ -115,9 +139,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  PdfdesginerRoute: typeof PdfdesginerRoute
   PdfdesignerRoute: typeof PdfdesignerRouteWithChildren
   UsersRoute: typeof UsersRoute
   ViewerKeyRoute: typeof ViewerKeyRoute
+  PdfIdRoute: typeof PdfIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -134,6 +160,13 @@ declare module '@tanstack/react-router' {
       path: '/pdfdesigner'
       fullPath: '/pdfdesigner'
       preLoaderRoute: typeof PdfdesignerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdfdesginer': {
+      id: '/pdfdesginer'
+      path: '/pdfdesginer'
+      fullPath: '/pdfdesginer'
+      preLoaderRoute: typeof PdfdesginerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -171,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PdfdesignerIdRouteImport
       parentRoute: typeof PdfdesignerRoute
     }
+    '/pdf/$id': {
+      id: '/pdf/$id'
+      path: '/pdf/$id'
+      fullPath: '/pdf/$id'
+      preLoaderRoute: typeof PdfIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -190,9 +230,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  PdfdesginerRoute: PdfdesginerRoute,
   PdfdesignerRoute: PdfdesignerRouteWithChildren,
   UsersRoute: UsersRoute,
   ViewerKeyRoute: ViewerKeyRoute,
+  PdfIdRoute: PdfIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

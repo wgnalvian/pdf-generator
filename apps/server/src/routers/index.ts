@@ -5,7 +5,7 @@ import { eq, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import * as crypto from "crypto";
 import { Payload, UserIjazah, UserPreview } from "@/types";
-import { decryptToken, encryptToken } from "@/helper";
+import { encryptToken, decryptToken } from "@/helper";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -22,7 +22,6 @@ export const appRouter = router({
       tamplate: z.string()
     })
   ).query(async ({ ctx, input }) => {
-
     // Get template
     const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.name, input.tamplate)));
     if (!resultTemplate) {
@@ -62,7 +61,7 @@ export const appRouter = router({
 
       const token = encryptToken(dataPayload, parseInt(template.expiredTime));
 
-      const urlIjazah = `${process.env.FE_URL}/viewer/${token}`;
+      const urlIjazah = `/pdf/${user.id}?q=${token}`;
       response.push({
         id: user.id,
         name: user.name,
@@ -112,7 +111,9 @@ export const appRouter = router({
             },
           });
 
-          const isUpdate = result[0].affectedRows == 2;
+        console.log("AFFECTED ROWS", result[0].affectedRows);
+
+        const isUpdate = result[0].affectedRows == 2;
 
         if (isUpdate) {
           const resultTemplate = (await tx.select().from(templates).where(eq(templates.name, input.name)));
@@ -241,8 +242,31 @@ export const appRouter = router({
     }
 
     return response
-  })
+  }),
+    getIsValidView: protectedProcedure
+    .input(z.object({ token: z.string(), idUser: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const object: Payload = decryptToken(input.token);
+      const fieldObject = object.name;
+      const valueObject = object.value;
 
+      const setField = new Set(fieldObject.map(String));
+
+      const result = await ctx.db
+        .select()
+        .from(templateRequiredField)
+        .where(eq(templateRequiredField.templateId, object.templateId));
+
+      // validation result on table
+      const matchedField = result.filter(r => setField.has(r.name));
+      const matchedValue = valueObject.filter(r => r == input.idUser);
+
+      const isValid = matchedField.length > 0 && matchedValue.length > 0;
+
+      return { success: true, data: {
+        isValidView: isValid,
+      }};
+    }),
 });
 
 export type AppRouter = typeof appRouter;
