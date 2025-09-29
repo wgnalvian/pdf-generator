@@ -4,7 +4,7 @@ import z from "zod";
 import { eq, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import * as crypto from "crypto";
-import { PayloadIjazahUser, UserIjazah } from "@/types";
+import { Payload, UserIjazah } from "@/types";
 import { encryptToken } from "@/helper";
 
 export const appRouter = router({
@@ -39,18 +39,22 @@ export const appRouter = router({
       })
     }
 
+    // Get required field tempalte
+    const requiredTemplateResult = (await ctx.db.select().from(templateRequiredField).where(eq(templateRequiredField.templateId, template.id)));
    
+
     let response: UserIjazah[] = [];
     const result = await ctx.db.select().from(user);
 
     for (const user of result) {
-      const dataPayload:PayloadIjazahUser = {
+      const dataPayload:Payload = {
         templateId: template.id,
-        userId: user.id,
+        name : requiredTemplateResult.map((item) => item.name),
+        value : requiredTemplateResult.map((item) => (user.id)),
         exp: 0,
       }
       
-      const token = encryptToken<PayloadIjazahUser>(dataPayload);
+      const token = encryptToken(dataPayload);
 
       const urlIjazah = `${process.env.FE_URL}/viewer/${token}`;
       response.push({

@@ -1,7 +1,8 @@
 
-export type PayloadIjazahUser = {
+export type Payload = {
     templateId: string;
-    userId: string;
+    name: string[];
+    value: string[];
     exp: number;
 };
 

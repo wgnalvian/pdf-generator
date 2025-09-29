@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { Payload } from "./types";
 
 const ALGO = "aes-256-gcm";
 const KEY = process.env.TOKEN_KEY
@@ -16,7 +17,7 @@ function b64uDecode(s: string) {
     return Buffer.from(s, "base64");
 }
 
-export function encryptToken<Payload extends WithExp>(data: Payload, ttlSeconds = 3600) {
+export function encryptToken(data: Payload, ttlSeconds = 3600) {
     const iv = crypto.randomBytes(12);
     const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
     const payload: Payload = { ...data, exp };
@@ -28,7 +29,7 @@ export function encryptToken<Payload extends WithExp>(data: Payload, ttlSeconds 
     return [b64u(iv), b64u(authTag), b64u(encrypted)].join(".");
 }
 
-export function decryptToken<Payload extends WithExp>(token: string): Payload {
+export function decryptToken(token: string): Payload {
     const parts = token.split(".");
     if (parts.length !== 3) throw new Error("Invalid token format");
     const iv = b64uDecode(parts[0]);
