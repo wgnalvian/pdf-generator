@@ -1,4 +1,4 @@
-// src/routes/pdf/$id.tsx
+// src/routes/pdf-designer/$id.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { Designer, Viewer } from "@pdfme/ui";
 import type { Template } from "@pdfme/common";
@@ -7,7 +7,7 @@ import { text, image, barcodes } from "@pdfme/schemas";
 import { useEffect, useRef, useState } from "react";
 import { generate } from "@pdfme/generator";
 import { trpc } from "@/utils/trpc";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 const plugins = {
@@ -39,34 +39,17 @@ const baseTemplate: Template = {
   sampledata: [],
 };
 
-interface QParamsToken {
-  q?: string;
-}
-
-export const Route = createFileRoute("/pdf/$id")({
-  component: PdfPage,
+export const Route = createFileRoute("/pdfdesigner")({
+  component: PdfDesignerPage,
 });
 
-function PdfPage() {
-  const { id } = Route.useParams();
-  const searchParams = Route.useSearch();
-  const userQuery = useQuery(trpc.getUserById.queryOptions({ id }));
-  const {data, isError, error} = useQuery(trpc.getIsValidView.queryOptions({
-    token: (searchParams as QParamsToken)?.q || '',
-    idUser: id,
-  }));
-
-  useEffect(() => {
-    if (isError || !data?.data?.isValidView) {
-      toast.error(error?.message || "Token for view not valid");
-    }
-  }, [data?.data])
-
+function PdfDesignerPage() {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<Viewer | null>(null);
   const [templatee, setTemplate] = useState<Template>(baseTemplate);
+  const saveTemplateMutation = useMutation(trpc.saveTemplate.mutationOptions());
 
   const handleTemplateChange = (newTemplate: Template) => {
     setTemplate(newTemplate);
@@ -76,14 +59,13 @@ function PdfPage() {
   };
 
   useEffect(() => {
-    if (!userQuery.data) return;
-
+    
     const newTemplate = {
       ...baseTemplate,
       sampledata: [
         {
           logo: "/ijazah.jpg",
-          name: userQuery.data.name ?? "No Name",
+          name: "No Name",
         },
       ],
     };
@@ -103,9 +85,9 @@ function PdfPage() {
       });
       designer.onChangeTemplate((t) => handleTemplateChange(t));
     }
-
+  
     if (previewRef.current) {
-
+     
       viewerRef.current = new Viewer({
         domContainer: previewRef.current,
         template: newTemplate as any,
@@ -113,7 +95,7 @@ function PdfPage() {
         inputs: (newTemplate.sampledata as any) || [],
       });
     }
-  }, [userQuery.data]);
+  }, []);
 
   async function loadImageAsBase64(url: string) {
     const res = await fetch(url);
@@ -125,15 +107,36 @@ function PdfPage() {
     });
   }
 
+  const handleSaveTemplate = async () => {
+   
+  
+    let requiredFields = [];
+    for (const field of templatee.schemas) {
+      for (const schema of field) {
+       requiredFields.push(schema.name);
+      }
+    }
+    await saveTemplateMutation.mutateAsync({
+      name: `ijazah`,
+      template: templatee,
+      requiredFields
+
+    }).then(() => {
+      toast.success("Template saved successfully");
+    }).catch((error) => {
+      toast.error(error.message);
+    });
+  };
+
   const handleDownload = async () => {
-    if (!userQuery.data) return;
+  
     const pdf = await generate({
       template: templatee as any,
       plugins,
       inputs: [
         {
           logo: await loadImageAsBase64("/ijazah.jpg"),
-          name: userQuery.data.name ?? "No Name",
+          name: "No Name",
         },
       ],
     });
@@ -147,25 +150,24 @@ function PdfPage() {
     URL.revokeObjectURL(url);
   };
 
-  if (userQuery.isLoading) {
-    return <p className="p-4">Loading user...</p>;
-  }
-
-  if (userQuery.error) {
-    return <p className="p-4 text-red-500">Failed: {userQuery.error.message}</p>;
-  }
-
   return (
     <div className="h-screen w-screen flex flex-col">
-      <div className="p-2 bg-gray-200 flex justify-end">
+      <div className="p-4 bg-gray-200 flex justify-end">
         <button
           onClick={handleDownload}
           className="px-4 py-2 bg-green-500 text-white rounded"
         >
           Download PDF
         </button>
+        <button
+          onClick={handleSaveTemplate}
+          className="px-4 py-2 bg-blue-500 text-white rounded ml-4"
+        >
+          Save Template
+        </button>
       </div>
       <div className="flex-row flex">
+        <div ref={containerRef} className="flex-1" />
         <div ref={previewRef} className="flex-1" />
       </div>
     </div>

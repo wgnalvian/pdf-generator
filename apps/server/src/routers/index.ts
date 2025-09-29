@@ -5,7 +5,7 @@ import { eq, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import * as crypto from "crypto";
 import { Payload, UserIjazah } from "@/types";
-import { encryptToken } from "@/helper";
+import { encryptToken, decryptToken } from "@/helper";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -22,41 +22,46 @@ export const appRouter = router({
       tamplate: z.string()
     })
   ).query(async ({ ctx, input }) => {
-
     // Get template
     const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.name, input.tamplate)));
     if (!resultTemplate) {
       throw new TRPCError({
-        code: "BAD_REQUEST",
+        code: "NOT_FOUND",
         message: "Template not found",
       })
     }
+
     const template = resultTemplate[0];
     if (!template) {
       throw new TRPCError({
-        code: "BAD_REQUEST",
+        code: "NOT_FOUND",
         message: "Template not found",
       })
     }
 
     // Get required field tempalte
     const requiredTemplateResult = (await ctx.db.select().from(templateRequiredField).where(eq(templateRequiredField.templateId, template.id)));
-   
+    if (!requiredTemplateResult) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Template not found",
+      })
+    }
 
     let response: UserIjazah[] = [];
     const result = await ctx.db.select().from(user);
 
     for (const user of result) {
-      const dataPayload:Payload = {
+      const dataPayload: Payload = {
         templateId: template.id,
-        name : requiredTemplateResult.map((item) => item.name),
-        value : requiredTemplateResult.map((item) => (user.id)),
+        name: requiredTemplateResult.map((item) => item.name),
+        value: requiredTemplateResult.map((item) => (user.id)),
         exp: 0,
       }
-      
+
       const token = encryptToken(dataPayload);
 
-      const urlIjazah = `${process.env.FE_URL}/viewer/${token}`;
+      const urlIjazah = `/pdf/${user.id}?q=${token}`;
       response.push({
         id: user.id,
         name: user.name,
@@ -81,11 +86,12 @@ export const appRouter = router({
   saveTemplate: protectedProcedure
     .input(z.object({
       name: z.string(),
+      requiredFields: z.array(z.string()),
       template: z.any(),
     }))
     .mutation(async ({ ctx, input }) => {
 
-      const id = crypto.randomUUID();
+      let id = crypto.randomUUID().toString();
       const data = {
         id,
         template: input.template,
@@ -103,25 +109,72 @@ export const appRouter = router({
             },
           });
 
-        if (result[0].affectedRows != 2) {
+        console.log("AFFECTED ROWS", result[0].affectedRows);
+
+        const isUpdate = result[0].affectedRows == 2;
+
+        if (isUpdate) {
+          const resultTemplate = (await tx.select().from(templates).where(eq(templates.name, input.name)));
+          if (!resultTemplate) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Template not found",
+            })
+          }
+
+          const template = resultTemplate[0];
+          if (!template) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Template not found",
+            })
+          }
+          id = template.id;
+          // Delete required field
+          await tx.delete(templateRequiredField).where(eq(templateRequiredField.templateId,template.id));
+        }
+
+        for (const requiredField of input.requiredFields) {
+          const idReqField = crypto.randomUUID();
           await tx
             .insert(templateRequiredField)
             .values({
-              id,
+              id: idReqField,
               templateId: id,
-              name: "name",
+              name: requiredField,
               createdAt: new Date(),
               updatedAt: new Date(),
             })
-            .onDuplicateKeyUpdate({
-              set: { id: sql`id` },
-            });
         }
+
       });
 
       return { success: true };
     }),
+    getIsValidView: protectedProcedure
+    .input(z.object({ token: z.string(), idUser: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const object: Payload = decryptToken(input.token);
+      const fieldObject = object.name;
+      const valueObject = object.value;
 
+      const setField = new Set(fieldObject.map(String));
+
+      const result = await ctx.db
+        .select()
+        .from(templateRequiredField)
+        .where(eq(templateRequiredField.templateId, object.templateId));
+
+      // validation result on table
+      const matchedField = result.filter(r => setField.has(r.name));
+      const matchedValue = valueObject.filter(r => r == input.idUser);
+
+      const isValid = matchedField.length > 0 && matchedValue.length > 0;
+
+      return { success: true, data: {
+        isValidView: isValid,
+      }};
+    }),
 });
 
 export type AppRouter = typeof appRouter;
