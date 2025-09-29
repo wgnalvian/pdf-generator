@@ -183,7 +183,7 @@ export const appRouter = router({
       }
 
       const template = resultTemplate[0];
-      // Validate max hit count 
+      // Validate max hit count
       if (template.maxCountHit < countTemplateSession.length) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -191,7 +191,7 @@ export const appRouter = router({
         })
       }
 
-      // Convert 
+      // Convert
 
       const response: UserPreview = {
         id: ctx.session?.user.id ?? "",
@@ -212,17 +212,6 @@ export const appRouter = router({
     })).mutation(async ({ ctx, input }) => {
       let decoded = decryptToken(input.key);
 
-
-      // Insert into template sessions
-      await ctx.db.insert(templateSessions).values({
-        id: crypto.randomUUID(),
-        token: input.key,
-        userId: ctx.session?.user.id ?? ""
-      })
-
-      // Get count template session
-      const countTemplateSession = (await ctx.db.select().from(templateSessions).where(eq(templateSessions.token, input.key)));
-
       // Get template
       const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.id, decoded.templateId)));
       if (resultTemplate.length == 0) {
@@ -241,7 +230,7 @@ export const appRouter = router({
         })
       }
 
-      // Convert 
+      // Convert
       const response: UserPreview = {
         id: ctx.session?.user.id ?? "",
         name: ctx.session?.user.name ?? "",
@@ -274,6 +263,13 @@ export const appRouter = router({
 
       const isValid = matchedField.length > 0 && matchedValue.length > 0;
 
+      if (!isValid) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Your token is invalid",
+        })
+      }
+
       // Get template
       const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.id, object.templateId)));
       if (resultTemplate.length == 0) {
@@ -285,32 +281,7 @@ export const appRouter = router({
 
       const template = resultTemplate[0];
 
-      // Insert into template sessions
-      await ctx.db.insert(templateSessions).values({
-        id: crypto.randomUUID(),
-        token: input.token,
-        userId: ctx.session?.user.id ?? ""
-      })
-
-      // Get count template session
-      const countTemplateSession = (await ctx.db.select().from(templateSessions).where(eq(templateSessions.token, input.token)));
-
-      // Validate max hit count 
-      if (template.maxCountHit < countTemplateSession.length) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "You have reached the maximum number of hits",
-        })
-      }
-
-      if (!isValid) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Your token is invalid",
-        })
-      }
-
-      // Convert 
+      // Convert
       const response: UserPreview = {
         id: ctx.session?.user.id ?? "",
         name: ctx.session?.user.name ?? "",
@@ -323,6 +294,43 @@ export const appRouter = router({
 
       return response
     }),
+    createTemplateSessions: protectedProcedure
+      .input(z.object({
+        token: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const object: Payload = decryptToken(input.token);
+        // Insert into template sessions
+        await ctx.db.insert(templateSessions).values({
+          id: crypto.randomUUID(),
+          token: input.token,
+          userId: ctx.session?.user.id ?? ""
+        })
+
+        // Get count template session
+        const countTemplateSession = (await ctx.db.select().from(templateSessions).where(eq(templateSessions.token, input.token)));
+        console.log("countTemplateSession", countTemplateSession.length);
+
+        const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.id, object.templateId)));
+        if (resultTemplate.length == 0) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Template not found",
+          })
+        }
+
+        const template = resultTemplate[0];
+        console.log("template", template);
+
+        // Validate max hit count
+        if (template.maxCountHit < countTemplateSession.length) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "You have reached the maximum number of hits",
+            cause: 'maxHit'
+          })
+        }
+      })
 });
 
 export type AppRouter = typeof appRouter;

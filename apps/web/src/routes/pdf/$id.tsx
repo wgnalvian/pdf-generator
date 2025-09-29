@@ -1,5 +1,5 @@
+import { createFileRoute } from "@tanstack/react-router"
 // src/routes/pdf/$id.tsx
-import { createFileRoute } from "@tanstack/react-router";
 import { Designer, Viewer } from "@pdfme/ui";
 import type { Template } from "@pdfme/common";
 import { BLANK_A4_PDF } from "@pdfme/common";
@@ -9,6 +9,7 @@ import { generate } from "@pdfme/generator";
 import { trpc } from "@/utils/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useRouter } from "@tanstack/react-router";
 
 const plugins = {
   text,
@@ -64,6 +65,20 @@ function PdfPage() {
   const [password, setPassword] = useState("");
   const [isOpenModalPassword, setIsOpenModalPassword] = useState(false);
   const validatePasswordByKey = useMutation(trpc.validatePasswordByKey.mutationOptions());
+  const router = useRouter()
+  const createTemplateSession = useMutation(trpc.createTemplateSessions.mutationOptions(
+    {
+      onSuccess: () => {
+        toast.success("Access granted");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+        if (error.message.includes('reached the maximum number')) {
+          router.history.back()
+        }
+      }
+    }
+  ));
 
   const handleTemplateChange = (newTemplate: Template) => {
     setTemplate(newTemplate);
@@ -74,6 +89,10 @@ function PdfPage() {
 
   useEffect(() => {
     if (!userQuery.data) return;
+
+    if (!userQuery.data.isHavePassword) {
+      handleCreateTemplateSession();
+    }
 
     const newTemplate = {
       ...baseTemplate,
@@ -123,12 +142,18 @@ function PdfPage() {
     });
   }
 
+  const handleCreateTemplateSession = () => {
+    createTemplateSession.mutate({
+      token: token,
+    });
+  };
 
   const handleSubmitPassword = async(e: React.FormEvent) => {
     e.preventDefault();
     await validatePasswordByKey.mutateAsync({ key : token, password })
     .then(() => {
       toast.success("Password is correct");
+      handleCreateTemplateSession();
       setIsOpenModalPassword(false);
     }).catch((error) => {
       toast.error(error.message);
