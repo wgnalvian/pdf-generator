@@ -21,7 +21,10 @@ export const Route = createFileRoute("/users")({
 });
 
 function UsersPage() {
-  const usersQuery = useQuery(trpc.getUsers.queryOptions());
+  const usersQuery = useQuery(trpc.getUsers.queryOptions({
+    tamplate: "Ijazah",
+  }));
+
   const navigate = useNavigate({
 		from: "/",
 	});

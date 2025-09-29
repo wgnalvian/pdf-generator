@@ -8,7 +8,6 @@ type ProcedureBuilder = typeof t.procedure;
 
 export const router: RouterFactory = t.router;
 
-
 export const publicProcedure: ProcedureBuilder = t.procedure;
 export const protectedProcedure : ProcedureBuilder = t.procedure.use(({ ctx, next }) => {
   if (!ctx.session) {

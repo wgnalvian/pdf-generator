@@ -28,6 +28,16 @@ CREATE TABLE `session` (
 	CONSTRAINT `session_token_unique` UNIQUE(`token`)
 );
 --> statement-breakpoint
+CREATE TABLE `templates` (
+	`id` varchar(191) NOT NULL,
+	`name` varchar(191) NOT NULL,
+	`template` json NOT NULL,
+	`created_at` timestamp NOT NULL DEFAULT (now()),
+	`updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `templates_id` PRIMARY KEY(`id`),
+	CONSTRAINT `idx_template_name` UNIQUE(`name`)
+);
+--> statement-breakpoint
 CREATE TABLE `user` (
 	`id` varchar(36) NOT NULL,
 	`name` text NOT NULL,

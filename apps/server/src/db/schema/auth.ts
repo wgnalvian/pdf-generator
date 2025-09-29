@@ -5,6 +5,7 @@ import {
 	timestamp,
 	boolean,
 	json,
+	uniqueIndex,
 } from "drizzle-orm/mysql-core";
 
 export const user = mysqlTable("user", {
@@ -60,8 +61,19 @@ export const verification = mysqlTable("verification", {
 
 export const templates = mysqlTable("templates", {
 	id: varchar("id", { length: 191 }).primaryKey(),
-	name: text("name"),
+	name: varchar("name", { length: 191 }).notNull(),
 	template: json("template").notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => [
+	uniqueIndex("idx_template_name").on(table.name)
+]);
+
+export const templateRequiredField = mysqlTable("template_required_fields", {
+	id: varchar("id", { length: 191 }).primaryKey(),
+	templateId: varchar("template_id", { length: 191 }).notNull().references(() => templates.id),
+	name: varchar("name", { length: 191 }).notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+	uniqueIndex("idx_template_required_fields").on(table.templateId, table.name)]);

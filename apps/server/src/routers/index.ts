@@ -1,7 +1,11 @@
-import { templates, user } from "@/db/schema/auth";
+import { templateRequiredField, templates, user } from "@/db/schema/auth";
 import { protectedProcedure, publicProcedure, router } from "../lib/trpc";
 import z from "zod";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import * as crypto from "crypto";
+import { PayloadIjazahUser, UserIjazah } from "@/types";
+import { encryptToken } from "@/helper";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -13,8 +17,53 @@ export const appRouter = router({
       user: ctx.session?.user,
     };
   }),
-  getUsers: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.db.select().from(user);
+  getUsers: protectedProcedure.input(
+    z.object({
+      tamplate: z.string()
+    })
+  ).query(async ({ ctx, input }) => {
+
+    // Get template
+    const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.name, input.tamplate)));
+    if (!resultTemplate) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Template not found",
+      })
+    }
+    const template = resultTemplate[0];
+    if (!template) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Template not found",
+      })
+    }
+
+   
+    let response: UserIjazah[] = [];
+    const result = await ctx.db.select().from(user);
+
+    for (const user of result) {
+      const dataPayload:PayloadIjazahUser = {
+        templateId: template.id,
+        userId: user.id,
+        exp: 0,
+      }
+      
+      const token = encryptToken<PayloadIjazahUser>(dataPayload);
+
+      const urlIjazah = `${process.env.FE_URL}/viewer/${token}`;
+      response.push({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        urlIjazah,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      });
+    }
+
+    return response;
   }),
   getUserById: protectedProcedure
     .input(z.object({ id: z.string() }))
@@ -23,26 +72,49 @@ export const appRouter = router({
         .select()
         .from(user)
         .where(eq(user.id, input.id));
-
       return result[0] ?? null;
     }),
   saveTemplate: protectedProcedure
     .input(z.object({
-      id: z.string(),
       name: z.string(),
-      template: z.any(), // atau lebih ketat pakai zod schema
+      template: z.any(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.db
-        .insert(templates)
-        .values(input)
-        .onDuplicateKeyUpdate({
-          set: {
-            template: input.template,
-            name: input.name,
-            updatedAt: new Date(),
-          },
-        });
+
+      const id = crypto.randomUUID();
+      const data = {
+        id,
+        template: input.template,
+        name: input.name,
+      };
+      await ctx.db.transaction(async (tx) => {
+        const result = await tx
+          .insert(templates)
+          .values(data)
+          .onDuplicateKeyUpdate({
+            set: {
+              template: input.template,
+              name: input.name,
+              updatedAt: new Date(),
+            },
+          });
+
+        if (result[0].affectedRows != 2) {
+          await tx
+            .insert(templateRequiredField)
+            .values({
+              id,
+              templateId: id,
+              name: "name",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .onDuplicateKeyUpdate({
+              set: { id: sql`id` },
+            });
+        }
+      });
+
       return { success: true };
     }),
 

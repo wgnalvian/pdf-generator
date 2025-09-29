@@ -7,7 +7,8 @@ import { text, image, barcodes } from "@pdfme/schemas";
 import { useEffect, useRef, useState } from "react";
 import { generate } from "@pdfme/generator";
 import { trpc } from "@/utils/trpc";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const plugins = {
   text,
@@ -50,6 +51,7 @@ function PdfDesignerPage() {
   const previewRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<Viewer | null>(null);
   const [templatee, setTemplate] = useState<Template>(baseTemplate);
+  const saveTemplateMutation = useMutation(trpc.saveTemplate.mutationOptions());
 
   const handleTemplateChange = (newTemplate: Template) => {
     setTemplate(newTemplate);
@@ -108,6 +110,19 @@ function PdfDesignerPage() {
     });
   }
 
+  const handleSaveTemplate = async () => {
+    if (!userQuery.data) return;
+
+    await saveTemplateMutation.mutateAsync({
+      name: `ijazah`,
+      template: templatee,
+    }).then(() => {
+      toast.success("Template saved successfully");
+    }).catch((error) => {
+      toast.error(error.message);
+    });
+  };
+
   const handleDownload = async () => {
     if (!userQuery.data) return;
     const pdf = await generate({
@@ -140,12 +155,18 @@ function PdfDesignerPage() {
 
   return (
     <div className="h-screen w-screen flex flex-col">
-      <div className="p-2 bg-gray-200 flex justify-end">
+      <div className="p-4 bg-gray-200 flex justify-end">
         <button
           onClick={handleDownload}
           className="px-4 py-2 bg-green-500 text-white rounded"
         >
           Download PDF
+        </button>
+        <button
+          onClick={handleSaveTemplate}
+          className="px-4 py-2 bg-blue-500 text-white rounded ml-4"
+        >
+          Save Template
         </button>
       </div>
       <div className="flex-row flex">
