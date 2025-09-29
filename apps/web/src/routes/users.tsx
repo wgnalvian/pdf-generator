@@ -3,7 +3,7 @@ import { trpc } from "@/utils/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPaintBrush } from "@fortawesome/free-solid-svg-icons";
+import { faFile, faPaintBrush } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/users")({
@@ -42,19 +42,30 @@ function UsersPage() {
       {usersQuery.data && (
         <div className="divide-y divide-border rounded-lg border">
           {(usersQuery.data as any).map((user: any) => (
-            <div
-            onClick={() =>
-              navigate({
-                to: "/pdfdesigner/$id",
-                params: { id: String(user.id) },
-              })
-            }
-            key={user.id} className="p-3 text-sm flex flex-row justify-between items-center">
+            <div key={user.id} className="p-3 text-sm flex flex-row justify-between items-center">
               <div className="flex flex-col">
                 <p className="font-medium">{user.name || "No Name"}</p>
                 <p className="text-muted-foreground">{user.email}</p>
               </div>
-              <FontAwesomeIcon icon={faPaintBrush} />
+
+              <div className="flex gap-2">
+                <button onClick={() =>
+                  navigate({
+                    to: "/pdfdesigner/$id",
+                    params: { id: String(user.id) },
+                  })
+                }>
+                  <FontAwesomeIcon icon={faPaintBrush} />
+                </button>
+                <button onClick={() =>
+                  navigate({
+                    to: "/pdf/$id",
+                    params: { id: String(user.id) },
+                  })
+                }>
+                  <FontAwesomeIcon icon={faFile} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
