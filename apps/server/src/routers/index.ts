@@ -92,7 +92,7 @@ export const appRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
 
-      const id = crypto.randomUUID();
+      let id = crypto.randomUUID().toString();
       const data = {
         id,
         template: input.template,
@@ -109,7 +109,10 @@ export const appRouter = router({
               updatedAt: new Date(),
             },
           });
-        if (result[0].affectedRows == 2) {
+
+          const isUpdate = result[0].affectedRows == 2;
+
+        if (isUpdate) {
           const resultTemplate = (await tx.select().from(templates).where(eq(templates.name, input.name)));
           if (!resultTemplate) {
             throw new TRPCError({
@@ -125,6 +128,7 @@ export const appRouter = router({
               message: "Template not found",
             })
           }
+          id = template.id;
           // Delete required field
           await tx.delete(templateRequiredField).where(eq(templateRequiredField.templateId,template.id));
         }
