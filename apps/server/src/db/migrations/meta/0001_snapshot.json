@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "4fa84833-5fa9-48bd-8d07-871d110b338f",
-  "prevId": "17ec7635-4a9c-404f-a315-175ac32e4a5d",
+  "id": "35c594f6-0957-4636-8fcf-706d339491e0",
+  "prevId": "1fba1880-fc3b-4c1e-b282-6a83f97e7682",
   "tables": {
     "account": {
       "name": "account",
@@ -220,6 +220,84 @@
       },
       "checkConstraint": {}
     },
+    "template_required_fields": {
+      "name": "template_required_fields",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "template_id": {
+          "name": "template_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "idx_template_required_fields": {
+          "name": "idx_template_required_fields",
+          "columns": [
+            "template_id",
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "template_required_fields_template_id_templates_id_fk": {
+          "name": "template_required_fields_template_id_templates_id_fk",
+          "tableFrom": "template_required_fields",
+          "tableTo": "templates",
+          "columnsFrom": [
+            "template_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "template_required_fields_id": {
+          "name": "template_required_fields_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "templates": {
       "name": "templates",
       "columns": {
@@ -232,9 +310,9 @@
         },
         "name": {
           "name": "name",
-          "type": "text",
+          "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "template": {
@@ -262,7 +340,15 @@
           "default": "(now())"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_template_name": {
+          "name": "idx_template_name",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "templates_id": {
