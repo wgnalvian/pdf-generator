@@ -9,6 +9,7 @@ import { generate } from "@pdfme/generator";
 import { trpc } from "@/utils/trpc";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { UserPreview } from "../../../../server/src/types";
 
 const plugins = {
   text,
@@ -39,20 +40,21 @@ const baseTemplate: Template = {
   sampledata: [],
 };
 
-export const Route = createFileRoute("/pdfdesigner/$id")({
+export const Route = createFileRoute("/viewer/$key")({
   component: PdfDesignerPage,
 });
 
 function PdfDesignerPage() {
-  const { id } = Route.useParams();
-  const userQuery = useQuery(trpc.getUserById.queryOptions({ id })); 
+  const { key } = Route.useParams();
+  const userQuery = useQuery(trpc.getUserByKey.queryOptions({ key }));
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<Viewer | null>(null);
   const [templatee, setTemplate] = useState<Template>(baseTemplate);
-  const saveTemplateMutation = useMutation(trpc.saveTemplate.mutationOptions());
-
+  const [isOpenModalPassword, setIsOpenModalPassword] = useState(false);
+  const validatePasswordByKey = useMutation(trpc.validatePasswordByKey.mutationOptions());
+  const [password, setPassword] = useState("");
   const handleTemplateChange = (newTemplate: Template) => {
     setTemplate(newTemplate);
     if (viewerRef.current) {
@@ -62,7 +64,6 @@ function PdfDesignerPage() {
 
   useEffect(() => {
     if (!userQuery.data) return;
-
     const newTemplate = {
       ...baseTemplate,
       sampledata: [
@@ -73,10 +74,9 @@ function PdfDesignerPage() {
       ],
     };
 
+    setIsOpenModalPassword((userQuery.data as any).isHavePassword);
     setTemplate(newTemplate);
-    console.log("containerRef.current1");
     if (containerRef.current) {
-      console.log("containerRef.current2", containerRef.current);
       const designer = new Designer({
         domContainer: containerRef.current,
         template: newTemplate as any,
@@ -88,9 +88,9 @@ function PdfDesignerPage() {
       });
       designer.onChangeTemplate((t) => handleTemplateChange(t));
     }
-  
+
     if (previewRef.current) {
-     
+
       viewerRef.current = new Viewer({
         domContainer: previewRef.current,
         template: newTemplate as any,
@@ -132,6 +132,17 @@ function PdfDesignerPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleSubmitPassword = async(e: React.FormEvent) => {
+    e.preventDefault();
+    await validatePasswordByKey.mutateAsync({ key, password })
+    .then(() => {
+      toast.success("Password is correct");
+      setIsOpenModalPassword(false);
+    }).catch((error) => {
+      toast.error(error.message);
+    })
+  };
+
   if (userQuery.isLoading) {
     return <p className="p-4">Loading user...</p>;
   }
@@ -141,7 +152,45 @@ function PdfDesignerPage() {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col">
+    <div className="h-screen w-screen flex flex-col relative">
+
+      {/* Overlay Modal */}
+      {isOpenModalPassword && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-80 shadow-lg">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
+              Enter Password
+            </h2>
+            <form onSubmit={handleSubmitPassword}>
+              <input
+                type="password"
+                value={password}
+                placeholder="Password"
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+              />
+
+              <div className="mt-4 flex justify-end gap-2">
+                {/* <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                >
+                  Cancel
+                </button> */}
+                <button
+                  onClick={(e) => handleSubmitPassword(e)}
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="p-4 bg-gray-200 flex justify-end">
         <button
           onClick={handleDownload}
@@ -149,10 +198,10 @@ function PdfDesignerPage() {
         >
           Download PDF
         </button>
-       
+
       </div>
       <div className="flex-row flex">
-        <div ref={containerRef} className="flex-1" />
+        {/* <div ref={containerRef} className="flex-1" /> */}
         <div ref={previewRef} className="flex-1" />
       </div>
     </div>

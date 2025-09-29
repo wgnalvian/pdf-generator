@@ -3,8 +3,9 @@ import { trpc } from "@/utils/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPaintBrush } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faPaintBrush } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "@tanstack/react-router";
+import type { UserIjazah } from "../../../server/src/types";
 
 export const Route = createFileRoute("/users")({
   component: UsersPage,
@@ -47,20 +48,27 @@ function UsersPage() {
 
       {usersQuery.data && (
         <div className="divide-y divide-border rounded-lg border">
-          {(usersQuery.data as any).map((user: any) => (
+          {(usersQuery.data as any).map((user: UserIjazah) => (
             <div
-              onClick={() =>
-                navigate({
-                  to: "/pdfdesigner/$id",
-                  params: { id: String(user.id) },
-                })
-              }
+
               key={user.id} className="p-3 text-sm flex flex-row justify-between items-center">
               <div className="flex flex-col">
                 <p className="font-medium">{user.name || "No Name"}</p>
                 <p className="text-muted-foreground">{user.email}</p>
               </div>
-              <FontAwesomeIcon icon={faPaintBrush} />
+              <div className="flex flex-row">
+                <FontAwesomeIcon onClick={() =>
+                  navigate({
+                    to: "/pdfdesigner/$id",
+                    params: { id: String(user.id) },
+                  })
+                } icon={faPaintBrush} />
+                <div className="ml-3">
+                  <FontAwesomeIcon onClick={() =>
+                    window.location.href = user.urlIjazah
+                  } icon={faEye} />
+                </div>
+              </div>
             </div>
           ))}
         </div>

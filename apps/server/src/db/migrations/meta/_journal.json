@@ -15,6 +15,20 @@
       "when": 1759120604458,
       "tag": "0001_jittery_silver_sable",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1759128968779,
+      "tag": "0002_greedy_grim_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1759130564544,
+      "tag": "0003_silent_prowler",
+      "breakpoints": true
     }
   ]
 }

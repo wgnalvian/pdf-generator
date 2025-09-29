@@ -20,20 +20,11 @@ const baseTemplate: Template = {
   basePdf: BLANK_A4_PDF,
   schemas: [[
     {
-      type: "image",
-      name: "logo",
-      position: { x: 0, y: 0 },
-      width: 200,
-      height: 100,
-    } as any,
-    {
       type: "text",
-      name: "name",
-      position: { x: 0, y: 42 },
-      width: 200,
-      height: 10,
-      alignment: "center",
-      verticalAlignment: "middle",
+      name: "placeholder",
+      position: { x: 0, y: 0 },
+      width: 1,
+      height: 1,
     } as any,
   ]],
   sampledata: [],
@@ -62,16 +53,9 @@ function PdfDesignerPage() {
     
     const newTemplate = {
       ...baseTemplate,
-      sampledata: [
-        {
-          logo: "/ijazah.jpg",
-          name: "No Name",
-        },
-      ],
     };
 
     setTemplate(newTemplate);
-    console.log("containerRef.current1");
     if (containerRef.current) {
       console.log("containerRef.current2", containerRef.current);
       const designer = new Designer({
@@ -109,17 +93,9 @@ function PdfDesignerPage() {
 
   const handleSaveTemplate = async () => {
    
-  
-    let requiredFields = [];
-    for (const field of templatee.schemas) {
-      for (const schema of field) {
-       requiredFields.push(schema.name);
-      }
-    }
     await saveTemplateMutation.mutateAsync({
       name: `ijazah`,
       template: templatee,
-      requiredFields
 
     }).then(() => {
       toast.success("Template saved successfully");
@@ -136,7 +112,7 @@ function PdfDesignerPage() {
       inputs: [
         {
           logo: await loadImageAsBase64("/ijazah.jpg"),
-          name: "No Name",
+          name: "Syifa",
         },
       ],
     });
@@ -168,7 +144,7 @@ function PdfDesignerPage() {
       </div>
       <div className="flex-row flex">
         <div ref={containerRef} className="flex-1" />
-        <div ref={previewRef} className="flex-1" />
+        {/* <div ref={previewRef} className="flex-1" /> */}
       </div>
     </div>
   );

@@ -1,12 +1,11 @@
 import crypto from "crypto";
 import { Payload } from "./types";
+import { TRPCError } from "@trpc/server";
 
 const ALGO = "aes-256-gcm";
 const KEY = process.env.TOKEN_KEY
     ? Buffer.from(process.env.TOKEN_KEY, "hex")
     : crypto.randomBytes(32);
-
-type WithExp = { exp: number };
 
 function b64u(buf: Buffer) {
     return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -31,7 +30,7 @@ export function encryptToken(data: Payload, ttlSeconds = 3600) {
 
 export function decryptToken(token: string): Payload {
     const parts = token.split(".");
-    if (parts.length !== 3) throw new Error("Invalid token format");
+    if (parts.length !== 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid token" });
     const iv = b64uDecode(parts[0]);
     const authTag = b64uDecode(parts[1]);
     const ciphertext = b64uDecode(parts[2]);
@@ -41,7 +40,7 @@ export function decryptToken(token: string): Payload {
     const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
     const payload = JSON.parse(decrypted.toString("utf8")) as Payload;
 
-    if (Math.floor(Date.now() / 1000) > payload.exp) throw new Error("Token expired");
+    if (Math.floor(Date.now() / 1000) > payload.exp) throw new TRPCError({ code: "UNAUTHORIZED", message: "Token expired" });
 
     return payload;
 }

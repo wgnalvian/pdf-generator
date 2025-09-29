@@ -1,9 +1,11 @@
+import { integer } from "drizzle-orm/gel-core";
 import {
 	mysqlTable,
 	varchar,
 	text,
 	timestamp,
 	boolean,
+	int,
 	json,
 	uniqueIndex,
 } from "drizzle-orm/mysql-core";
@@ -63,6 +65,9 @@ export const templates = mysqlTable("templates", {
 	id: varchar("id", { length: 191 }).primaryKey(),
 	name: varchar("name", { length: 191 }).notNull(),
 	template: json("template").notNull(),
+	maxCountHit: int("max_count_hit").notNull(),
+	expiredTime : varchar("expired_time", { length: 191 }).notNull(),
+	password: varchar("password", { length: 191 }).notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (table) => [
@@ -77,3 +82,11 @@ export const templateRequiredField = mysqlTable("template_required_fields", {
 	updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 }, (table) => [
 	uniqueIndex("idx_template_required_fields").on(table.templateId, table.name)]);
+
+export const templateSessions = mysqlTable("template_sessions", {
+	id: varchar("id", { length: 191 }).primaryKey(),
+	token: text("token").notNull(),
+	userId : varchar("user_id", { length: 191 }).notNull().references(() => user.id),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
