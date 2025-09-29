@@ -4,6 +4,7 @@ import {
 	text,
 	timestamp,
 	boolean,
+	json,
 } from "drizzle-orm/mysql-core";
 
 export const user = mysqlTable("user", {
@@ -55,4 +56,12 @@ export const verification = mysqlTable("verification", {
 	expiresAt: timestamp("expires_at").notNull(),
 	createdAt: timestamp("created_at"),
 	updatedAt: timestamp("updated_at"),
+});
+
+export const templates = mysqlTable("templates", {
+	id: varchar("id", { length: 191 }).primaryKey(),
+	name: text("name"),
+	template: json("template").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });

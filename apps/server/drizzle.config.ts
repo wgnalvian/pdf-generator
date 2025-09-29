@@ -1,6 +1,6 @@
 import { defineConfig } from "drizzle-kit";
 
-export default defineConfig({
+const config:any = defineConfig({
 	schema: "./src/db/schema",
 	out: "./src/db/migrations",
 	dialect: "mysql",
@@ -8,3 +8,5 @@ export default defineConfig({
 		url: process.env.DATABASE_URL || "",
 	},
 });
+
+export default config;

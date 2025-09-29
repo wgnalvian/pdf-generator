@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db";
 import * as schema from "../db/schema/auth";
 
-export const auth = betterAuth<BetterAuthOptions>({
+export const auth: ReturnType<typeof betterAuth>  = betterAuth<BetterAuthOptions>({
 	database: drizzleAdapter(db, {
 		provider: "mysql",
 		schema: schema,

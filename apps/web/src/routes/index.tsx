@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { trpc } from "@/utils/trpc";
+import { trpc, trpcClient } from "@/utils/trpc";
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/")({
@@ -24,7 +24,6 @@ const TITLE_TEXT = `
 
 function HomeComponent() {
 	const healthCheck = useQuery(trpc.healthCheck.queryOptions());
-
 	return (
 		<div className="container mx-auto max-w-3xl px-4 py-2">
 			<pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
