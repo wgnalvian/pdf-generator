@@ -142,8 +142,8 @@ export interface RootRouteChildren {
   PdfdesginerRoute: typeof PdfdesginerRoute
   PdfdesignerRoute: typeof PdfdesignerRouteWithChildren
   UsersRoute: typeof UsersRoute
-  ViewerKeyRoute: typeof ViewerKeyRoute
   PdfIdRoute: typeof PdfIdRoute
+  ViewerKeyRoute: typeof ViewerKeyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -233,8 +233,8 @@ const rootRouteChildren: RootRouteChildren = {
   PdfdesginerRoute: PdfdesginerRoute,
   PdfdesignerRoute: PdfdesignerRouteWithChildren,
   UsersRoute: UsersRoute,
-  ViewerKeyRoute: ViewerKeyRoute,
   PdfIdRoute: PdfIdRoute,
+  ViewerKeyRoute: ViewerKeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

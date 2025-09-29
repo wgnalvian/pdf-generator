@@ -95,7 +95,7 @@ export const appRouter = router({
         id,
         template: input.template,
         name: input.name,
-        password : "1234",
+        password: "1234",
         maxCountHit: 3,
         expiredTime: "3600",
       };
@@ -134,10 +134,10 @@ export const appRouter = router({
 
           id = template.id;
           // Delete required field
-          await tx.delete(templateRequiredField).where(eq(templateRequiredField.templateId,id));
+          await tx.delete(templateRequiredField).where(eq(templateRequiredField.templateId, id));
         }
 
-        const requiredFields = ['userId']; 
+        const requiredFields = ['userId'];
 
         for (const requiredField of requiredFields) {
           const idReqField = crypto.randomUUID();
@@ -156,12 +156,12 @@ export const appRouter = router({
 
       return { success: true };
     }),
-  getUserByKey : protectedProcedure
+  getUserByKey: protectedProcedure
     .input(z.object({
       key: z.string(),
     })).query(async ({ ctx, input }) => {
       let decoded = decryptToken(input.key);
-      
+
 
       // Insert into template sessions
       await ctx.db.insert(templateSessions).values({
@@ -184,7 +184,7 @@ export const appRouter = router({
 
       const template = resultTemplate[0];
       // Validate max hit count 
-      if(template.maxCountHit < countTemplateSession.length) {
+      if (template.maxCountHit < countTemplateSession.length) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "You have reached the maximum number of hits",
@@ -193,7 +193,7 @@ export const appRouter = router({
 
       // Convert 
 
-      const response:UserPreview = {
+      const response: UserPreview = {
         id: ctx.session?.user.id ?? "",
         name: ctx.session?.user.name ?? "",
         email: ctx.session?.user.email ?? "",
@@ -205,45 +205,56 @@ export const appRouter = router({
 
       return response
     }),
-  validatePasswordByKey:protectedProcedure
-  .input(z.object({
-    password: z.string(),
-    key: z.string(),
-  })).mutation(async ({ ctx, input }) => {
-    let decoded = decryptToken(input.key);
-    
-    // Get template
-    const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.id, decoded.templateId)));
-    if (resultTemplate.length == 0) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Template not found",
+  validatePasswordByKey: protectedProcedure
+    .input(z.object({
+      password: z.string(),
+      key: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      let decoded = decryptToken(input.key);
+
+
+      // Insert into template sessions
+      await ctx.db.insert(templateSessions).values({
+        id: crypto.randomUUID(),
+        token: input.key,
+        userId: ctx.session?.user.id ?? ""
       })
-    }
 
-    const template = resultTemplate[0];
+      // Get count template session
+      const countTemplateSession = (await ctx.db.select().from(templateSessions).where(eq(templateSessions.token, input.key)));
 
-    if(input.password != template.password) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Password not match",
-      })
-    }
+      // Get template
+      const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.id, decoded.templateId)));
+      if (resultTemplate.length == 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Template not found",
+        })
+      }
 
-    // Convert 
-    const response:UserPreview = {
-      id: ctx.session?.user.id ?? "",
-      name: ctx.session?.user.name ?? "",
-      email: ctx.session?.user.email ?? "",
-      isHavePassword: template.password ? true : false,
-      exp: new Date(decoded.exp * 1000),
-      createdAt: ctx.session?.user.createdAt ?? new Date(),
-      updatedAt: ctx.session?.user.updatedAt ?? new Date(),
-    }
+      const template = resultTemplate[0];
 
-    return response
-  }),
-    getIsValidView: protectedProcedure
+      if (input.password != template.password) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Password not match",
+        })
+      }
+
+      // Convert 
+      const response: UserPreview = {
+        id: ctx.session?.user.id ?? "",
+        name: ctx.session?.user.name ?? "",
+        email: ctx.session?.user.email ?? "",
+        isHavePassword: template.password ? true : false,
+        exp: new Date(decoded.exp * 1000),
+        createdAt: ctx.session?.user.createdAt ?? new Date(),
+        updatedAt: ctx.session?.user.updatedAt ?? new Date(),
+      }
+
+      return response
+    }),
+  getIsValidView: protectedProcedure
     .input(z.object({ token: z.string(), idUser: z.string() }))
     .query(async ({ ctx, input }) => {
       const object: Payload = decryptToken(input.token);
@@ -263,9 +274,54 @@ export const appRouter = router({
 
       const isValid = matchedField.length > 0 && matchedValue.length > 0;
 
-      return { success: true, data: {
-        isValidView: isValid,
-      }};
+      // Get template
+      const resultTemplate = (await ctx.db.select().from(templates).where(eq(templates.id, object.templateId)));
+      if (resultTemplate.length == 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Template not found",
+        })
+      }
+
+      const template = resultTemplate[0];
+
+      // Insert into template sessions
+      await ctx.db.insert(templateSessions).values({
+        id: crypto.randomUUID(),
+        token: input.token,
+        userId: ctx.session?.user.id ?? ""
+      })
+
+      // Get count template session
+      const countTemplateSession = (await ctx.db.select().from(templateSessions).where(eq(templateSessions.token, input.token)));
+
+      // Validate max hit count 
+      if (template.maxCountHit < countTemplateSession.length) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "You have reached the maximum number of hits",
+        })
+      }
+
+      if (!isValid) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Your token is invalid",
+        })
+      }
+
+      // Convert 
+      const response: UserPreview = {
+        id: ctx.session?.user.id ?? "",
+        name: ctx.session?.user.name ?? "",
+        email: ctx.session?.user.email ?? "",
+        isHavePassword: template.password ? true : false,
+        exp: new Date(object.exp * 1000),
+        createdAt: ctx.session?.user.createdAt ?? new Date(),
+        updatedAt: ctx.session?.user.updatedAt ?? new Date(),
+      }
+
+      return response
     }),
 });
 

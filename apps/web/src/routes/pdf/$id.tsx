@@ -4,10 +4,10 @@ import { Designer, Viewer } from "@pdfme/ui";
 import type { Template } from "@pdfme/common";
 import { BLANK_A4_PDF } from "@pdfme/common";
 import { text, image, barcodes } from "@pdfme/schemas";
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { generate } from "@pdfme/generator";
 import { trpc } from "@/utils/trpc";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 const plugins = {
@@ -50,23 +50,20 @@ export const Route = createFileRoute("/pdf/$id")({
 function PdfPage() {
   const { id } = Route.useParams();
   const searchParams = Route.useSearch();
-  const userQuery = useQuery(trpc.getUserById.queryOptions({ id }));
-  const {data, isError, error} = useQuery(trpc.getIsValidView.queryOptions({
-    token: (searchParams as QParamsToken)?.q || '',
+  const token = (searchParams as QParamsToken)?.q || '';
+  // const userQuery = useQuery(trpc.getUserById.queryOptions({ id }));
+  const userQuery = useQuery(trpc.getIsValidView.queryOptions({
+    token: token,
     idUser: id,
   }));
-
-  useEffect(() => {
-    if (isError || !data?.data?.isValidView) {
-      toast.error(error?.message || "Token for view not valid");
-    }
-  }, [data?.data])
-
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<Viewer | null>(null);
   const [templatee, setTemplate] = useState<Template>(baseTemplate);
+  const [password, setPassword] = useState("");
+  const [isOpenModalPassword, setIsOpenModalPassword] = useState(false);
+  const validatePasswordByKey = useMutation(trpc.validatePasswordByKey.mutationOptions());
 
   const handleTemplateChange = (newTemplate: Template) => {
     setTemplate(newTemplate);
@@ -88,6 +85,7 @@ function PdfPage() {
       ],
     };
 
+    setIsOpenModalPassword((userQuery.data as any).isHavePassword);
     setTemplate(newTemplate);
     console.log("containerRef.current1");
     if (containerRef.current) {
@@ -125,6 +123,18 @@ function PdfPage() {
     });
   }
 
+
+  const handleSubmitPassword = async(e: React.FormEvent) => {
+    e.preventDefault();
+    await validatePasswordByKey.mutateAsync({ key : token, password })
+    .then(() => {
+      toast.success("Password is correct");
+      setIsOpenModalPassword(false);
+    }).catch((error) => {
+      toast.error(error.message);
+    })
+  };
+
   const handleDownload = async () => {
     if (!userQuery.data) return;
     const pdf = await generate({
@@ -157,6 +167,45 @@ function PdfPage() {
 
   return (
     <div className="h-screen w-screen flex flex-col">
+
+       {/* Overlay Modal */}
+       {isOpenModalPassword && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-80 shadow-lg">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
+              Enter Password
+            </h2>
+            <form onSubmit={handleSubmitPassword}>
+              <input
+                type="password"
+                value={password}
+                placeholder="Password"
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-blue-500"
+              />
+
+              <div className="mt-4 flex justify-end gap-2">
+                {/* <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                >
+                  Cancel
+                </button> */}
+                <button
+                  onClick={(e) => handleSubmitPassword(e)}
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+
       <div className="p-2 bg-gray-200 flex justify-end">
         <button
           onClick={handleDownload}
