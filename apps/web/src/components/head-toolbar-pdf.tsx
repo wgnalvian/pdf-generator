@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SimpleSelect from "./simple-select";
 import type { Template } from "@pdfme/common";
 import { OptionsLayoutPDF } from "@/constant/const_pdf";
@@ -10,6 +10,7 @@ import { text, image, barcodes } from "@pdfme/schemas";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { toast } from "sonner";
+import TextInput from './text-input';
 
 
 const plugins = {
@@ -26,6 +27,7 @@ interface HeadToolbarPDFProps {
 
 export default function HeadToolbarPdf(props: HeadToolbarPDFProps) {
   const saveTemplateMutation = useMutation(trpc.saveTemplate.mutationOptions());
+  const [templateName, setTemplateName] = useState<string>("");
 
   async function loadImageAsBase64(url: string) {
     const res = await fetch(url);
@@ -44,7 +46,7 @@ export default function HeadToolbarPdf(props: HeadToolbarPDFProps) {
       inputs: [
         {
           logo: await loadImageAsBase64("/ijazah.jpg"),
-          name: "Syifa",
+          name: "",
         },
       ],
     });
@@ -53,7 +55,7 @@ export default function HeadToolbarPdf(props: HeadToolbarPDFProps) {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "my-document.pdf";
+    a.download = `${templateName || "my-document"}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -61,7 +63,7 @@ export default function HeadToolbarPdf(props: HeadToolbarPDFProps) {
   const handleSaveTemplate = async () => {
 
     await saveTemplateMutation.mutateAsync({
-      name: `ijazah`,
+      name: templateName || 'document',
       template: props.template,
     }).then(() => {
       toast.success("Template saved successfully");
@@ -72,7 +74,7 @@ export default function HeadToolbarPdf(props: HeadToolbarPDFProps) {
 
   return (
     <div className="p-4 bg-gray-200 flex justify-between items-center">
-      <div className="w-1/2">
+      <div className="flex w-1/2 gap-2 items-center">
         <SimpleSelect<Template['basePdf']>
           label="Layout"
           options={OptionsLayoutPDF}
@@ -82,6 +84,12 @@ export default function HeadToolbarPdf(props: HeadToolbarPDFProps) {
           }}
           serialize={(val) => JSON.stringify(val)}
           deserialize={(val) => JSON.parse(val)}
+        />
+        <TextInput
+          label="Template Name"
+          value={templateName}
+          onChange={setTemplateName}
+          placeholder="Masukkan nama template..."
         />
       </div>
       <div className="flex justify-end items-center w-1/2 gap-4">
