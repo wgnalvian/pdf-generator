@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import * as crypto from "crypto";
 import { Payload, UserIjazah, UserPreview } from "@/types";
 import { encryptToken, decryptToken } from "@/helper";
+import type { Template } from "@pdfme/common";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -86,7 +87,7 @@ export const appRouter = router({
   saveTemplate: protectedProcedure
     .input(z.object({
       name: z.string(),
-      template: z.any(),
+      template: z.custom<Template>(),
     }))
     .mutation(async ({ ctx, input }) => {
 

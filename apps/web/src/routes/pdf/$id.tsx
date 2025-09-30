@@ -139,7 +139,7 @@ function PdfPage() {
       console.log("containerRef.current2", containerRef.current);
       const designer = new Designer({
         domContainer: containerRef.current,
-        template: newTemplate as any,
+        template: newTemplate,
         options: {
           lang: "en",
           mode: "designer",
@@ -153,7 +153,7 @@ function PdfPage() {
 
       viewerRef.current = new Viewer({
         domContainer: previewRef.current,
-        template: newTemplate as any,
+        template: newTemplate,
         plugins,
         inputs:  [
           {
