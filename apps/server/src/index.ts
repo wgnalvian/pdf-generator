@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { trpcServer } from "@hono/trpc-server";
 import { createContext } from "./lib/context";
-import { appRouter } from "./routers/index";
+import { appRouter, templatePdfRouter } from "./routers/index";
 import { auth } from "./lib/auth";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
