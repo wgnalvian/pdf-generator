@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Designer, Viewer } from "@pdfme/ui";
 import type { Template } from "@pdfme/common";
 import { BLANK_A4_PDF } from "@pdfme/common";
-import { text, image, barcodes, table, line } from "@pdfme/schemas";
 import { useEffect, useRef, useState } from "react";
 import { generate } from "@pdfme/generator";
 import { trpc } from "@/utils/trpc";
@@ -12,14 +11,41 @@ import { toast } from "sonner";
 import SimpleSelect, { type OptionSimpleSelect } from "@/components/simple-select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy } from "@fortawesome/free-solid-svg-icons";
+import { 
+  text, 
+  image, 
+  barcodes, 
+  table, 
+  line, 
+  ellipse,
+  checkbox,
+  date,
+  dateTime,
+  radioGroup,
+  select,
+  svg,
+  time,
+  multiVariableText,
+  rectangle
+} from "@pdfme/schemas";
 
 const plugins = {
   text,
+  image,
   table,
   line,
-  image,
-  barcode: barcodes["code128"],
-};
+  ellipse,
+  checkbox,
+  date,
+  dateTime,
+  radioGroup,
+  select,
+  svg,
+  time,
+  multiVariableText,
+  rectangle,
+  ...barcodes,
+}
 
 async function loadFont(path:string) {
   const response = await fetch(path);
