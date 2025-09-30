@@ -3,15 +3,43 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Designer, Viewer } from "@pdfme/ui";
 import type { Template } from "@pdfme/common";
 import { BLANK_A4_PDF } from "@pdfme/common";
-import { text, image, barcodes } from "@pdfme/schemas";
 import { useEffect, useRef, useState } from "react";
 import HeadToolbarPdf from "@/components/head-toolbar-pdf";
+import {
+  text,
+  image,
+  barcodes,
+  table,
+  line,
+  ellipse,
+  checkbox,
+  date,
+  dateTime,
+  radioGroup,
+  select,
+  svg,
+  time,
+  multiVariableText,
+  rectangle
+} from "@pdfme/schemas";
 
 const plugins = {
   text,
   image,
-  barcode: barcodes["code128"],
-};
+  table,
+  line,
+  ellipse,
+  checkbox,
+  date,
+  dateTime,
+  radioGroup,
+  select,
+  svg,
+  time,
+  multiVariableText,
+  rectangle,
+  ...barcodes,
+}
 
 const baseTemplate: Template = {
   basePdf: BLANK_A4_PDF,
