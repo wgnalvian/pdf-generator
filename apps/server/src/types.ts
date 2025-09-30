@@ -21,6 +21,7 @@ export type UserPreview = {
     name: string;
     email: string;
     isHavePassword: boolean;
+    template: any;
     exp: Date;
     createdAt: Date;
     updatedAt: Date;

@@ -196,6 +196,7 @@ export const appRouter = router({
       const response: UserPreview = {
         id: ctx.session?.user.id ?? "",
         name: ctx.session?.user.name ?? "",
+        template: template.template as any,
         email: ctx.session?.user.email ?? "",
         isHavePassword: template.password ? true : false,
         exp: new Date(decoded.exp * 1000),
@@ -232,6 +233,7 @@ export const appRouter = router({
 
       // Convert
       const response: UserPreview = {
+        template: template.template as any,
         id: ctx.session?.user.id ?? "",
         name: ctx.session?.user.name ?? "",
         email: ctx.session?.user.email ?? "",
@@ -283,6 +285,7 @@ export const appRouter = router({
 
       // Convert
       const response: UserPreview = {
+        template : template.template as any,
         id: ctx.session?.user.id ?? "",
         name: ctx.session?.user.name ?? "",
         email: ctx.session?.user.email ?? "",

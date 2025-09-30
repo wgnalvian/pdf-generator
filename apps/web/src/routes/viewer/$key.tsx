@@ -117,11 +117,28 @@ function PdfDesignerPage() {
       plugins,
       inputs: [
         {
-          logo: await loadImageAsBase64("/ijazah.jpg"),
-          name: userQuery.data.name ?? "No Name",
+          field1: "data:image/png;base64,iVBORw0K...", // logo sekolah
+          field2: "PERGURUAN ISLAM AL-AZHAR KELAPA GADING - SURABAYA",
+          field3: "SMPI AL-AZHAR KELAPA GADING SURABAYA",
+          field4: "", // ini line, jadi bisa kosong
+          table: [
+            ["1", "Rabaniyah", "SB", "Sangat Baik"],
+            ["2", "Insaniyah", "SB", "Sangat Baik"],
+          ],
+          field6: "A. Karakter Pengembangan",
+          field7: "RAPOR DAN PROFILE PESERTA DIDIK",
+          field8: "Nama Peserta Didik   :", 
+          field9: "Syifa Lusiani",
+          "field8 copy": "NISN                             :",
+          "field9 copy": "01110",
+          "field8 copy 2": "Kelas                            :",
+          "field8 copy 3": "Fase                             :",
+          "field9 copy 2": "A",
+          "field9 copy 3": "IV",
         },
-      ],
+      ]
     });
+    
     const blob = new Blob([pdf.buffer], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
 

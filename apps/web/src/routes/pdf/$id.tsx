@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { Designer, Viewer } from "@pdfme/ui";
 import type { Template } from "@pdfme/common";
 import { BLANK_A4_PDF } from "@pdfme/common";
-import { text, image, barcodes } from "@pdfme/schemas";
+import { text, image, barcodes, line, table } from "@pdfme/schemas";
 import { use, useEffect, useRef, useState } from "react";
 import { generate } from "@pdfme/generator";
 import { trpc } from "@/utils/trpc";
@@ -14,6 +14,8 @@ import { useRouter } from "@tanstack/react-router";
 const plugins = {
   text,
   image,
+  line,
+  table,
   barcode: barcodes["code128"],
 };
 
@@ -58,6 +60,16 @@ function PdfPage() {
     idUser: id,
   }));
 
+  const font = {
+    serif: {
+      data: 'https://example.com/fonts/serif.ttf',
+      fallback: true,
+    },
+    sans_serif: {
+      data: 'https://example.com/fonts/sans_serif.ttf',
+    },
+  };
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<Viewer | null>(null);
@@ -93,20 +105,36 @@ function PdfPage() {
     if (!userQuery.data.isHavePassword) {
       handleCreateTemplateSession();
     }
-
+    
     const newTemplate = {
-      ...baseTemplate,
+      ...userQuery.data.template,
       sampledata: [
         {
-          logo: "/ijazah.jpg",
-          name: userQuery.data.name ?? "No Name",
+          field1: "/al.png", // logo sekolah
+          field2: "PERGURUAN ISLAM AL-AZHAR KELAPA GADING - SURABAYA",
+          field3: "SMPI AL-AZHAR KELAPA GADING SURABAYA",
+          field4: "", // ini line, jadi bisa kosong
+          table: [
+            ["1", "Rabaniyah", "SB", "Sangat Baik"],
+            ["2", "Insaniyah", "SB", "Sangat Baik"],
+          ],
+          field6: "A. Karakter Pengembangan",
+          field7: "RAPOR DAN PROFILE PESERTA DIDIK",
+          field8: "Nama Peserta Didik   :", 
+          field9: "Syifa Lusiani",
+          "field8 copy": "NISN                             :",
+          "field9 copy": "01110",
+          "field8 copy 2": "Kelas                            :",
+          "field8 copy 3": "Fase                             :",
+          "field9 copy 2": "A",
+          "field9 copy 3": "IV",
         },
-      ],
+      ]
     };
 
     setIsOpenModalPassword((userQuery.data as any).isHavePassword);
     setTemplate(newTemplate);
-    console.log("containerRef.current1");
+    
     if (containerRef.current) {
       console.log("containerRef.current2", containerRef.current);
       const designer = new Designer({
@@ -127,7 +155,28 @@ function PdfPage() {
         domContainer: previewRef.current,
         template: newTemplate as any,
         plugins,
-        inputs: (newTemplate.sampledata as any) || [],
+        inputs:  [
+          {
+            field1: "/al.png", // logo sekolah
+            field2: "PERGURUAN ISLAM AL-AZHAR KELAPA GADING - SURABAYA",
+            field3: "SMPI AL-AZHAR KELAPA GADING SURABAYA",
+            field4: "", // ini line, jadi bisa kosong
+            table: [
+              ["1", "Rabaniyah", "SB", "Sangat Baik"],
+              ["2", "Insaniyah", "SB", "Sangat Baik"],
+            ],
+            field6: "A. Karakter Pengembangan",
+            field7: "RAPOR DAN PROFILE PESERTA DIDIK",
+            field8: "Nama Peserta Didik   :", 
+            field9: "Syifa Lusiani",
+            "field8 copy": "NISN                             :",
+            "field9 copy": "01110",
+            "field8 copy 2": "Kelas                            :",
+            "field8 copy 3": "Fase                             :",
+            "field9 copy 2": "A",
+            "field9 copy 3": "IV",
+          },
+        ]
       });
     }
   }, [userQuery.data]);
