@@ -12,8 +12,8 @@ export const appRouter = router({
       user: ctx.session?.user,
     };
   }),
-  ...UserProcedure,
-  ...TemplatePdfProcedure
+  ...UserProcedure(),
+  ...TemplatePdfProcedure()
 });
 
 export type AppRouter = typeof appRouter;
