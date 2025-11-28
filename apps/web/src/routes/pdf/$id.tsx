@@ -19,7 +19,7 @@ const plugins = {
   barcode: barcodes["code128"],
 };
 
-// test2343224
+// aku buat pull request baru 
 const baseTemplate: Template = {
   basePdf: BLANK_A4_PDF,
   schemas: [[
