@@ -19,7 +19,7 @@ const plugins = {
   barcode: barcodes["code128"],
 };
 
-// test2
+// test22
 const baseTemplate: Template = {
   basePdf: BLANK_A4_PDF,
   schemas: [[
